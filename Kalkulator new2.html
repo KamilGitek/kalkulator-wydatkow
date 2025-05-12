@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Kalkulator wydatków – do 15 osób</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 30px auto;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      background-color: #f9f9f9;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+    .person-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      gap: 10px;
+    }
+    label {
+      min-width: 130px;
+      font-weight: bold;
+      color: #555;
+      user-select: none;
+    }
+    input[type="text"], input[type="number"] {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+      flex: 1;
+    }
+    input[type="text"]:focus, input[type="number"]:focus {
+      border-color: #007BFF;
+      outline: none;
+    }
+    button {
+      padding: 10px 15px;
+      font-size: 16px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      display: block;
+      max-width: 220px;
+      width: 100%;
+      box-sizing: border-box;
+      margin: 10px auto;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #wynik {
+      margin-top: 20px;
+      font-weight: bold;
+      background-color: #e9ecef;
+      padding: 15px;
+      border-radius: 5px;
+      color: #222;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+    ul {
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 6px;
+    }
+    .remove-btn {
+      background-color: #dc3545;
+      border: none;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 13px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background-color 0.3s;
+      display: inline-block;
+      user-select: none;
+      width: auto;
+      min-width: 30px;
+      line-height: 1;
+      text-align: center;
+    }
+    .remove-btn:hover {
+      background-color: #a71d2a;
+    }
+    /* Responsive */
+    @media (max-width: 400px) {
+      body {
+        max-width: 90%;
+        margin: 20px auto;
+        padding: 15px;
+      }
+      button {
+        font-size: 14px;
+        padding: 8px 12px;
+        max-width: 180px;
+      }
+      input[type="text"], input[type="number"] {
+        font-size: 14px;
+        padding: 8px;
+      }
+      label {
+        min-width: 100px;
+        font-size: 14px;
+      }
+      .remove-btn {
+        padding: 4px 8px;
+        font-size: 12px;
+        min-width: 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Kalkulator wyrównania wydatków</h2>
+  
+  <div id="formularz">
+    <div class="person-row" data-index="1">
+      <label for="name-1">Osoba 1:</label>
+      <input type="text" id="name-1" class="name" placeholder="Imię (opcjonalnie)" />
+      <input type="number" step="0.01" min="0" class="wydatki" placeholder="Wydatki (zł)" />
+      <button class="remove-btn" onclick="usunOsobe(this)" title="Usuń osobę" aria-label="Usuń osobę 1">×</button>
+    </div>
+    <div class="person-row" data-index="2">
+      <label for="name-2">Osoba 2:</label>
+      <input type="text" id="name-2" class="name" placeholder="Imię (opcjonalnie)" />
+      <input type="number" step="0.01" min="0" class="wydatki" placeholder="Wydatki (zł)" />
+      <button class="remove-btn" onclick="usunOsobe(this)" title="Usuń osobę" aria-label="Usuń osobę 2">×</button>
+    </div>
+  </div>
+
+  <button onclick="dodajOsobe()">+ Dodaj osobę (max 15)</button>
+  <button onclick="oblicz()">Oblicz</button>
+
+  <div id="wynik"></div>
+
+  <script>
+    let liczbaOsob = 2;
+    const maxOsob = 15;
+
+    function ustawEtykiety() {
+      const persons = document.querySelectorAll("#formularz .person-row");
+      persons.forEach((div, idx) => {
+        const label = div.querySelector("label");
+        const nameInput = div.querySelector("input.name");
+        const removeBtn = div.querySelector("button.remove-btn");
+        const personNumber = idx + 1;
+
+        label.textContent = "Osoba " + personNumber + ":";
+        label.htmlFor = "name-" + personNumber;
+        nameInput.id = "name-" + personNumber;
+
+        removeBtn.setAttribute("aria-label", "Usuń osobę " + personNumber);
+        removeBtn.title = "Usuń osobę " + personNumber;
+
+        div.dataset.index = personNumber;
+      });
+
+      liczbaOsob = persons.length;
+      pokazLubUkryjPrzyciskiUsuwania();
+    }
+
+    function pokazLubUkryjPrzyciskiUsuwania() {
+      const persons = document.querySelectorAll("#formularz .person-row");
+      const pokaz = persons.length > 2;
+      persons.forEach(div => {
+        const removeBtn = div.querySelector("button.remove-btn");
+        if (removeBtn) {
+          removeBtn.style.display = pokaz ? "inline-block" : "none";
+        }
+      });
+    }
+
+    function dodajOsobe() {
+      if (liczbaOsob >= maxOsob) {
+        alert("Maksymalna liczba osób to 15.");
+        return;
+      }
+      liczbaOsob++;
+      const formularz = document.getElementById("formularz");
+      const div = document.createElement("div");
+      div.className = "person-row";
+      div.dataset.index = liczbaOsob;
+      div.innerHTML = `
+        <label for="name-${liczbaOsob}">Osoba ${liczbaOsob}:</label>
+        <input type="text" id="name-${liczbaOsob}" class="name" placeholder="Imię (opcjonalnie)" />
+        <input type="number" step="0.01" min="0" class="wydatki" placeholder="Wydatki (zł)" />
+        <button class="remove-btn" onclick="usunOsobe(this)" title="Usuń osobę" aria-label="Usuń osobę ${liczbaOsob}">×</button>
+      `;
+      formularz.appendChild(div);
+      pokazLubUkryjPrzyciskiUsuwania();
+    }
+
+    function usunOsobe(button) {
+      const formularz = document.getElementById("formularz");
+      if (liczbaOsob <= 2) {
+        alert("Muszą pozostać co najmniej dwie osoby.");
+        return;
+      }
+      const div = button.closest(".person-row");
+      if (div) {
+        formularz.removeChild(div);
+        ustawEtykiety();
+      }
+    }
+
+    function oblicz() {
+      const formularz = document.getElementById("formularz");
+      const persons = formularz.querySelectorAll(".person-row");
+      const wydatki = [];
+      const imiona = [];
+
+      persons.forEach((div, index) => {
+        const wydatkiInput = div.querySelector("input.wydatki");
+        const nameInput = div.querySelector("input.name");
+        let kwota = parseFloat(wydatkiInput.value);
+        if (isNaN(kwota) || kwota < 0) kwota = 0;
+        wydatki.push(kwota);
+
+        const name = nameInput.value.trim();
+        if(name.length > 0) {
+          imiona.push(name);
+        } else {
+          imiona.push("Osoba " + (index + 1));
+        }
+      });
+
+      if (wydatki.length < 2) {
+        document.getElementById("wynik").innerHTML = "Wprowadź wydatki dla co najmniej dwóch osób.";
+        return;
+      }
+
+      const suma = wydatki.reduce((a, b) => a + b, 0);
+      const naOsobe = suma / wydatki.length;
+
+      let wynik = `<p>Łączna suma: ${suma.toFixed(2)} zł</p>`;
+      wynik += `<p>Na osobę: ${naOsobe.toFixed(2)} zł</p><ul>`;
+
+      const salda = wydatki.map(kwota => +(kwota - naOsobe).toFixed(2));
+
+      salda.forEach((roznica, i) => {
+        if (roznica > 0.005) {
+          wynik += `<li><strong>${imiona[i]}</strong> powinna dostać <strong>${roznica.toFixed(2)}</strong> zł</li>`;
+        } else if (roznica < -0.005) {
+          wynik += `<li><strong>${imiona[i]}</strong> powinna dopłacić <strong>${Math.abs(roznica).toFixed(2)}</strong> zł</li>`;
+        } else {
+          wynik += `<li><strong>${imiona[i]}</strong> nie musi nic wyrównywać</li>`;
+        }
+      });
+
+      wynik += "</ul>";
+
+      let payers = [];
+      let receivers = [];
+
+      salda.forEach((saldo, idx) => {
+        const person = { name: imiona[idx], amount: Math.abs(saldo) };
+        if (saldo < -0.005) {
+          payers.push(person);
+        } else if (saldo > 0.005) {
+          receivers.push(person);
+        }
+      });
+
+      const settlements = [];
+
+      let payerIndex = 0;
+      let receiverIndex = 0;
+
+      while (payerIndex < payers.length && receiverIndex < receivers.length) {
+        const payer = payers[payerIndex];
+        const receiver = receivers[receiverIndex];
+        const payment = Math.min(payer.amount, receiver.amount);
+
+        settlements.push({
+          from: payer.name,
+          to: receiver.name,
+          amount: payment
+        });
+
+        payer.amount = +(payer.amount - payment).toFixed(2);
+        receiver.amount = +(receiver.amount - payment).toFixed(2);
+
+        if (payer.amount < 0.01) {
+          payerIndex++;
+        }
+        if (receiver.amount < 0.01) {
+          receiverIndex++;
+        }
+      }
+
+      if (settlements.length > 0) {
+        wynik += "<h3>Wyrównania do wykonania (kto komu ile płaci):</h3><ul>";
+        settlements.forEach(settlement => {
+          wynik += `<li><strong>${settlement.from}</strong> → <strong>${settlement.to}</strong> : <strong>${settlement.amount.toFixed(2)} zł</strong></li>`;
+        });
+        wynik += "</ul>";
+      } else {
+        wynik += "<p>Wszyscy mają wyrównane wydatki, nie trzeba nic płacić.</p>";
+      }
+
+      document.getElementById("wynik").innerHTML = wynik;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      pokazLubUkryjPrzyciskiUsuwania();
+    });
+  </script>
+
+</body>
+</html>
+
